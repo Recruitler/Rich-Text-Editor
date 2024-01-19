@@ -81,7 +81,7 @@ export class DemoEditorComponent implements OnInit {
   uploadImageResult: IIMageRes = { url: "", elem: { src: "" } };
   // the RTE formControl
   content = this.formBuilder.control(
-    { value: "This is a test", disabled: false },
+    { value: "Go ahead, type something...", disabled: false },
     [Validators.required]
   );
   chars: number = 0;
@@ -221,9 +221,6 @@ export class DemoEditorComponent implements OnInit {
     console.log("content :>> ", content);
     // this.embedContent = content;
   };
-
-  // not sure what this was meant to be
-  preloadContent = () => {};
 
   filter = (query: string, key: string) => {
     return key.toLowerCase().indexOf(query.toLowerCase()) != -1;

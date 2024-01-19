@@ -34,7 +34,6 @@
   {{ this.content.enabled ? "enable" : "disable" }}
 </button>
 <button (click)="onBtnClick('code')">Code</button>
-<button (click)="preloadContent()" style="float: right">Preload</button>
 
 <div class="demo-editor">
   <recruitler-rte
@@ -47,8 +46,6 @@
     (uploadImageRequest)="uploadImageRequest($event)"
     [uploadImageResult]="uploadImageResult"
     (linkRequest)="useLinks($event)"
-    placeholder="What's your experience?"
-    style="width: 100%"
     [formControl]="content"
   />
   <p class="count" [ngClass]="{ warning: chars < 10, error: chars < 0 }">
@@ -57,4 +54,14 @@
 </div>
 
 <!-- OUTPUT EXAMPLE -->
-<div class="output" id="output" [innerHTML]="content.value"></div>
+<div class="output">
+  <div class="header">
+    <p><strong>Raw output</strong></p>
+  </div>
+  <div class="raw-output">{{ content.value }}</div>
+
+  <div class="header">
+    <p><strong>With highlightJS</strong></p>
+  </div>
+  <div id="output" [innerHTML]="content.value"></div>
+</div>
