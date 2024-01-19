@@ -1,3 +1,8 @@
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/@highlightjs/cdn-assets@11.3.1/styles/github.min.css"
+/>
+
 <ng-template #suggestionItemTemplate let-value let-active="active">
   <div class="suggestion-item" [class.selected]="active">
     <b>{{ value }}</b>
@@ -52,6 +57,4 @@
 </div>
 
 <!-- OUTPUT EXAMPLE -->
-<div class="output">
-  {{ content.value }}
-</div>
+<div class="output" id="output" [innerHTML]="content.value"></div>
