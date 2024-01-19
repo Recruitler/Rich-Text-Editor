@@ -1,4 +1,5 @@
 import { Component, ViewChild, TemplateRef, OnInit } from "@angular/core";
+import hljs from "highlight.js";
 import { CommonModule } from "@angular/common";
 import {
   FormBuilder,
@@ -113,7 +114,12 @@ export class DemoEditorComponent implements OnInit {
 
   constructor(private formBuilder: FormBuilder) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.content.valueChanges.subscribe((value) => {
+      // Handle the content change event here
+      this.handleContentChange(value);
+    });
+  }
 
   ngAfterContentChecked() {
     // IMPORTANT! See readme. Hashtags are formatted to be saved in a database
@@ -228,7 +234,22 @@ export class DemoEditorComponent implements OnInit {
   };
 
   count(chars: number): void {
-    console.log(chars);
     this.chars = chars;
+  }
+
+  handleContentChange(value: string | null) {
+    setTimeout(() => {
+      const codes = document.getElementById("output")?.querySelectorAll("code");
+      codes?.forEach((code) => {
+        if (code) hljs.highlightElement(code);
+        code.style.display = "block";
+        code.style.whiteSpace = "pre-wrap";
+        code.style.border = "solid 1px #dbdbdb";
+        code.style.background = "#f7f6f3";
+        code.style.borderRadius = "5px";
+        code.style.margin = "5px 0";
+        code.style.padding = "10px";
+      });
+    }, 0);
   }
 }
