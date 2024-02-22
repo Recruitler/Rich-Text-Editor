@@ -111,6 +111,7 @@ export class CdkRichTextEditorComponent
   suggestionSelectionTemplate!: TemplateRef<any>;
   links: string[] = [];
   codeEditors: any = [];
+  editorEdgeStatus: "top" | "in" | "bottom" | "empty" = "in"; // Code editor cursor stauts
 
   constructor(private domSantanizer: SafeDOMPipe) {
     this.toolbarItems = TOOLBAR_ITEMS.map((item) => ({
@@ -254,7 +255,7 @@ export class CdkRichTextEditorComponent
           newElement.innerHTML = codeTag.innerHTML;
           if (codeTag.parentNode)
             codeTag.parentNode.replaceChild(newElement, codeTag);
-          this.formatCodeEditor();
+          this.formatCodeEditors();
         }
 
         break;
@@ -400,7 +401,7 @@ export class CdkRichTextEditorComponent
         range.insertNode(brFragment);
         range.insertNode(codeFragment);
         range.collapse();
-        this.formatCodeEditor();
+        this.formatCodeEditors();
         return true;
       }
 
@@ -424,28 +425,96 @@ export class CdkRichTextEditorComponent
     return false;
   };
 
-  formatCodeEditor = () => {
-    const codeTags = this.richText.nativeElement.querySelectorAll("code");
-    this.codeEditors = [];
-    codeTags.forEach((codeTag) => {
-      const content = codeTag.innerHTML;
-      const handler = ace.edit(codeTag);
-      handler.setOptions({
-        maxLines: Infinity,
-      });
-      handler.session.setMode("ace/mode/javascript");
-      handler.setTheme("ace/theme/monokai");
-      handler.session.on("change", () => {
-        codeTag.getElementsByTagName("input")[0].value = handler.getValue();
-      });
-      const codeFragment = document.createElement("input");
-      codeFragment.type = "hidden";
-      codeFragment.value = content;
-      codeTag.appendChild(codeFragment);
-      this.codeEditors.push(handler);
-      codeTag.id = `code_${this.codeEditors.length - 1}`;
+  // Function to move the input cursor to a specified tag element.
+  moveCursorToTag(tag: ChildNode | null) {
+    let range = document.createRange();
+    let selection = window.getSelection();
+
+    if (tag && selection) {
+      range.setStart(tag, 0);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+
+  // Initializes and formats code editors within the rich text field.
+  formatCodeEditors() {
+    const codeElements = this.richText.nativeElement.querySelectorAll("code");
+
+    codeElements.forEach((element, index) => {
+      if (!element.id) {
+        // Check if the code element is unformatted (no ID).
+        const content = element.innerHTML;
+        const editor = ace.edit(element);
+        editor.setOptions({ maxLines: Infinity });
+        editor.session.setMode("ace/mode/javascript");
+        editor.setTheme("ace/theme/monokai");
+
+        // Updates a hidden input element with the editor's content on change.
+        editor.session.on("change", () => {
+          element.getElementsByTagName("input")[0].value = editor.getValue();
+        });
+
+        // Handles cursor movement and editor boundary interactions.
+        editor.commands.on("afterExec", (e) =>
+          this.handleCursorBoundaries(editor, e, element)
+        );
+
+        // Prepares a hidden input to store the code content.
+        const hiddenInput = document.createElement("input");
+        hiddenInput.type = "hidden";
+        hiddenInput.value = content;
+        element.appendChild(hiddenInput);
+
+        // Registers the editor and assigns a unique ID.
+        this.codeEditors.push(editor);
+        element.id = `code_${index}`;
+      }
     });
-  };
+  }
+
+  // Handles cursor movement and interactions with the editor boundaries.
+  handleCursorBoundaries(editor: any, eventData: any, codeTag: Element) {
+    const cursorPosition = editor.getCursorPosition();
+    const docLength = editor.getSession().getDocument().getLength();
+    const editorBoundaries = { start: 0, end: docLength - 1 };
+
+    // Moves the cursor to the next or previous tag based on command name and edge status.
+    if (
+      eventData.command.name === "golinedown" &&
+      (this.editorEdgeStatus === "bottom" || this.editorEdgeStatus === "empty")
+    ) {
+      this.moveCursorToTag(codeTag.nextElementSibling);
+    } else if (
+      eventData.command.name === "golineup" &&
+      (this.editorEdgeStatus === "top" || this.editorEdgeStatus === "empty")
+    ) {
+      this.moveCursorToTag(codeTag.previousElementSibling);
+    }
+
+    // Sets the editor edge status based on the cursor position.
+    this.editorEdgeStatus = this.determineEditorEdgeStatus(
+      cursorPosition,
+      editorBoundaries
+    );
+  }
+
+  // Determines the editor's edge status based on the current cursor position.
+  determineEditorEdgeStatus(cursorPosition: any, boundaries: any) {
+    if (
+      cursorPosition.row === boundaries.end &&
+      cursorPosition.row === boundaries.start
+    ) {
+      return "empty";
+    } else if (cursorPosition.row === boundaries.end) {
+      return "bottom";
+    } else if (cursorPosition.row === boundaries.start) {
+      return "top";
+    } else {
+      return "in";
+    }
+  }
 
   getSuggestionList = (tag: string) => {
     return new Promise<CdkSuggestionSetting>((resolve, reject) => {
@@ -723,7 +792,7 @@ export class CdkRichTextEditorComponent
   writeValue(value: string): void {
     setTimeout(() => {
       this.loadContent(value);
-      this.formatCodeEditor();
+      this.formatCodeEditors();
     }, 10);
     this.content = value;
   }
