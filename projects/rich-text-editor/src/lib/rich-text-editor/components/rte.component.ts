@@ -20,7 +20,7 @@ import { BehaviorSubject, take } from "rxjs";
 
 import * as ace from "ace-builds";
 import "ace-builds/src-noconflict/ace";
-import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/theme-crimson_editor";
 import "ace-builds/src-noconflict/mode-javascript";
 import {
   focusElementWithRange,
@@ -438,6 +438,12 @@ export class CdkRichTextEditorComponent
     }
   }
 
+  disableCodeEditors = (status: boolean) => {
+    this.codeEditors.forEach((editor: any) => {
+      editor.setReadOnly(status);
+    });
+  };
+
   // Initializes and formats code editors within the rich text field.
   formatCodeEditors() {
     const codeElements = this.richText.nativeElement.querySelectorAll("code");
@@ -449,11 +455,12 @@ export class CdkRichTextEditorComponent
         const editor = ace.edit(element);
         editor.setOptions({ maxLines: Infinity });
         editor.session.setMode("ace/mode/javascript");
-        editor.setTheme("ace/theme/monokai");
+        editor.setTheme("ace/theme/theme-crimson_editor");
 
         // Updates a hidden input element with the editor's content on change.
         editor.session.on("change", () => {
           element.getElementsByTagName("input")[0].value = editor.getValue();
+          this._contentChanged();
         });
 
         // Handles cursor movement and editor boundary interactions.
@@ -469,7 +476,7 @@ export class CdkRichTextEditorComponent
 
         // Registers the editor and assigns a unique ID.
         this.codeEditors.push(editor);
-        element.id = `code_${index}`;
+        element.id = `code_${this.codeEditors.length-1}`;
       }
     });
   }
@@ -796,7 +803,7 @@ export class CdkRichTextEditorComponent
     }, 10);
     this.content = value;
   }
-
+  
   onChange = (value: any) => {};
 
   onTouched = () => {};
@@ -812,6 +819,7 @@ export class CdkRichTextEditorComponent
   // not using?
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    this.disableCodeEditors(this.disabled);
   }
 
   markAsTouched() {
@@ -843,6 +851,7 @@ export class CdkRichTextEditorComponent
       // empty?
     }
 
+    // Focuse code editor when input cursor is in the editor
     setTimeout(() => {
       const selection = window.getSelection();
       const currentNode = selection!.focusNode;

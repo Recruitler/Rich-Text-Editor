@@ -118,9 +118,15 @@ rte-suggestion {
     min-height: 1rem;
     min-width: 1rem;
   }
-  .ace_editor, 
-  .ace_editor div {
-    font-family: monospace;
+  
+  .ace_editor {
+    & div {
+      font-family: monospace;
+    }
+    height: 84px;
+    border-radius: 6px;
+    border: 1px solid lightgrey;
+    margin: 4px 0px
   }
 
   /* ------------------------------------------------------------------------ *
