@@ -1,9 +1,13 @@
-@if (!!filteredSuggestions?.length) {
-  <ul #container class="rte-suggestion-box">
-    @for (suggestion of filteredSuggestions; let i = $index; track suggestion.key) {  
-      <li (click)="onClick($event, suggestion)">
-        <ng-container *ngTemplateOutlet="itemTemplate; context: { $implicit: suggestion.value, active: i == selectedIndex }" />
-      </li>
-    }
-  </ul>
-}
+<ul #container class="rte-suggestion-box">
+  @if (!!filteredSuggestions.length) { @for (suggestion of filteredSuggestions;
+  let i = $index; track suggestion.key) {
+  <li (click)="onClick($event, suggestion)">
+    <ng-container
+      *ngTemplateOutlet="
+        itemTemplate;
+        context: { $implicit: suggestion.value, active: i == selectedIndex }
+      "
+    />
+  </li>
+  } }
+</ul>
