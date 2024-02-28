@@ -523,6 +523,10 @@ export class CdkRichTextEditorComponent
     }
   }
 
+  onHashgtagKeywords = (keywords: string) => {
+    this.hashtagRequest.emit(keywords);
+  }
+
   getSuggestionList = (tag: string) => {
     return new Promise<CdkSuggestionSetting>((resolve, reject) => {
       if (tag != HASHTAG_TRIGGER) {

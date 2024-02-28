@@ -28,6 +28,7 @@ import {
 export class CdkSuggestionComponent {
   @ViewChild("container") container!: ElementRef<HTMLElement>;
   @Input("getSuggestionList") getSuggestionList?: (tag: string) => Promise<CdkSuggestionSetting>;
+  @Output('hashtagKeywords') hashtagKeywords = new EventEmitter<string>();
   @Output("cdkSuggestionSelected") select = new EventEmitter<CdkSuggestionSelect>();
   itemTemplate!: TemplateRef<any>;
   suggestions: CdkSuggestionItem[] = [];
@@ -229,7 +230,7 @@ export class CdkSuggestionComponent {
           if (text) {
             this.query = text.slice(this.startedOffset, selection.focusOffset);
             this.filterItems(this.query);
-
+            this.hashtagKeywords.emit(this.query);
             (this.filteredSuggestions)
             this.selectedIndex = 0;
             return;
