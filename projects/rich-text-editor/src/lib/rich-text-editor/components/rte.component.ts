@@ -599,16 +599,28 @@ export class CdkRichTextEditorComponent
     this.updateToolbar();
   }
 
-  getEditorCode = () => {
+  getEditorContent = () => {
     let clonedTextNode = this.richText.nativeElement.cloneNode(
       true
     ) as HTMLElement;
+
+    // Remove formatted code tags
     const codeTags = clonedTextNode.querySelectorAll("code");
     codeTags.forEach((codeTag) => {
       codeTag.attributes.removeNamedItem("class");
       codeTag.attributes.removeNamedItem("style");
       codeTag.innerHTML = codeTag.getElementsByTagName("input")[0].value;
     });
+
+    // Remove formatted hashtags
+    const hashtags = clonedTextNode.querySelectorAll("span[hashtag_component]");
+    hashtags.forEach((hashtag: any) => {
+      if (hashtag.children.length == 2) {
+        const textNode = document.createTextNode(hashtag.children[1].innerHTML);
+        hashtag.replaceWith(textNode);
+      }
+    });
+
     const editorCode = clonedTextNode.innerHTML;
     clonedTextNode.remove();
 
@@ -775,30 +787,17 @@ export class CdkRichTextEditorComponent
   };
 
   private _contentChanged = () => {
-    if (!this.richText?.nativeElement) return;
-
-    let clonedTextNode = this.richText.nativeElement.cloneNode(
-      true
-    ) as HTMLElement;
-    const hashtags = clonedTextNode.querySelectorAll("span[hashtag_component]");
-    hashtags.forEach((hashtag: any) => {
-      if (hashtag.children.length == 2) {
-        const textNode = document.createTextNode(hashtag.children[1].innerHTML);
-        hashtag.replaceWith(textNode);
-      }
-    });
+    if (!this.richText?.nativeElement) return; 
 
     setTimeout(() => {
-      const html = this.getEditorCode();
+      const content = this.getEditorContent();
 
-      if (html.startsWith("SafeValue must use")) {
-        this.onChange(html.substring(39, html.length - 35));
+      if (content.startsWith("SafeValue must use")) {
+        this.onChange(content.substring(39, content.length - 35));
       } else {
-        this.onChange(html);
+        this.onChange(content);
       }
     }, 100);
-
-    clonedTextNode.remove();
 
     this.catchLink();
     this.countOut();
