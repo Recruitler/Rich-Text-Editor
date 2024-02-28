@@ -533,20 +533,25 @@ export class CdkRichTextEditorComponent
         reject("");
         return;
       }
-      this.suggestionList$.pipe(take(1)).subscribe((hashtagList: any) => {
-        if (hashtagList) {
-          resolve({
-            data: hashtagList,
-            tag: HASHTAG,
-            itemTemplate: this.hashtagItemTemplate,
-            selectionTemplate: this.hashtagTemplate,
-            trigger: HASHTAG_TRIGGER,
-          });
-        } else {
-          reject("");
-        }
-      });
+
       this.hashtagRequest.emit("");
+
+      setTimeout(() => {
+        this.suggestionList$.pipe(take(1)).subscribe((hashtagList: any) => {
+          if (hashtagList) {
+            resolve({
+              data: hashtagList,
+              tag: HASHTAG,
+              itemTemplate: this.hashtagItemTemplate,
+              selectionTemplate: this.hashtagTemplate,
+              trigger: HASHTAG_TRIGGER,
+            });
+          } else {
+            reject("");
+          }
+        });
+      }, 300);
+      
     });
   };
 
