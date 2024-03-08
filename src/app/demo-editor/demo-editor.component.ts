@@ -111,6 +111,7 @@ export class DemoEditorComponent implements OnInit {
     },
   ];
   embedContent = "";
+  currentTheme: 'light-theme' | 'dark-theme' = 'dark-theme';
 
   constructor(private formBuilder: FormBuilder) {}
 

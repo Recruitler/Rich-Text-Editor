@@ -38,6 +38,7 @@
 <div class="demo-editor">
   <recruitler-rte
     #editor
+    [theme] = "currentTheme"
     [hashtagItemTemplate]="hashtagItemTemplate"
     [hashtagTemplate]="hashtagSelectionTemplate"
     (hashtagRequest)="hashtagSearch($event)"
