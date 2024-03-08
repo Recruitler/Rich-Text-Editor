@@ -21,6 +21,7 @@ import { BehaviorSubject, take } from "rxjs";
 import * as ace from "ace-builds";
 import "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/theme-crimson_editor";
+import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/mode-javascript";
 import {
   focusElementWithRange,
@@ -90,6 +91,7 @@ export class CdkRichTextEditorComponent
   }
   @Input() disabled: boolean | string = false;
   @Input() placeholder: string = "";
+  @Input() theme: 'light-theme' | 'dark-theme' = "light-theme";
   // OUTPUTS
   @Output("uploadImageRequest") uploadImageRequest =
     new EventEmitter<IUploadReq>();
@@ -455,7 +457,7 @@ export class CdkRichTextEditorComponent
         const editor = ace.edit(element);
         editor.setOptions({ maxLines: Infinity });
         editor.session.setMode("ace/mode/javascript");
-        editor.setTheme("ace/theme/theme-crimson_editor");
+        editor.setTheme(this.theme === 'dark-theme' ? "ace/theme/monokai" : "ace/theme/theme-crimson_editor");
 
         // Updates a hidden input element with the editor's content on change.
         editor.session.on("change", () => {
@@ -551,7 +553,7 @@ export class CdkRichTextEditorComponent
           }
         });
       }, 300);
-      
+
     });
   };
 
@@ -787,7 +789,7 @@ export class CdkRichTextEditorComponent
   };
 
   private _contentChanged = () => {
-    if (!this.richText?.nativeElement) return; 
+    if (!this.richText?.nativeElement) return;
 
     setTimeout(() => {
       const content = this.getEditorContent();
@@ -811,7 +813,7 @@ export class CdkRichTextEditorComponent
     }, 10);
     this.content = value;
   }
-  
+
   onChange = (value: any) => {};
 
   onTouched = () => {};
