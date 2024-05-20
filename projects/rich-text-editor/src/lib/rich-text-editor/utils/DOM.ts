@@ -86,9 +86,9 @@ export function createLiveHashtag(tag: string, value: any, template: TemplateRef
   const hiddenHashtag = document.createElement('span');
   hiddenHashtag.style.display = "none";
   hiddenHashtag.setAttribute('hashtag_code', tag);
-  hiddenHashtag.innerHTML = `${tag}${value}${tag}`;
+  hiddenHashtag.innerHTML = `${tag}{"id":"${value.id}","name":"${value.name}","iLiked":"${value.iLiked}","nLikes":"${value.nLikes}","createdAt":"${value.createdAt}"}${tag}`;
 
-  const viewRef: EmbeddedViewRef<Node> = template.createEmbeddedView({ value });
+  const viewRef: EmbeddedViewRef<Node> = template.createEmbeddedView({value});
   viewContainer?.insert(viewRef);
   viewRef.detectChanges();
   for (let node of viewRef.rootNodes) {
@@ -168,7 +168,7 @@ export function makeLiveHashtags(root: HTMLElement, tag: string, template: Templ
 //     textContent = convert(textContent,{ wordwrap: false });
 //     const hresult = hljs.highlightAuto(textContent)
 //     return hresult.value.replaceAll('\n', '<br/>');
-//   } 
+//   }
 //   return "";
 // }
 
