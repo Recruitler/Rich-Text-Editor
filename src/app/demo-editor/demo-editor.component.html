@@ -22,7 +22,7 @@
 </ng-template>
 
 <ng-template #hashtagSelectionTemplate let-value="value">
-  <app-hashtag> #{{ value }} </app-hashtag>
+  <app-hashtag> {{ value?.name ? '#' + value?.name : '' }} </app-hashtag>
 </ng-template>
 
 <h2>Recruitler.com's Rich Text Editor</h2>
