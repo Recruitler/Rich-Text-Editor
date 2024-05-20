@@ -81,7 +81,7 @@ export class DemoEditorComponent implements OnInit {
   uploadImageResult: IIMageRes = { url: "", elem: { src: "" } };
   // the RTE formControl
   content = this.formBuilder.control(
-    { value: "Go ahead, type something...", disabled: false },
+    { value: "XP 3 by professional1 and here's some content: --##--{\"id\":\"7dd3a3f3-2edb-414a-9380-0a358470b964\",\"name\":\"test3\",\"hasVoted\":\"false\",\"nLikes\":\"0\",\"createdAt\":\"some-date\"}--##-- and another to test a full XP 'like' --##--{\"id\":\"a425c190-09cc-40a2-a540-115b889ae770\",\"name\":\"test4\",\"hasVoted\":\"false\",\"nLikes\":\"0\",\"createdAt\":\"some-date\"}--##-- and some final text", disabled: false },
     [Validators.required]
   );
   chars: number = 0;
