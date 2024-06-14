@@ -1,6 +1,6 @@
 {
   "name": "@recruitler/rte",
-  "version": "0.2.20",
+  "version": "0.3.0",
   "peerDependencies": {
     "@angular/platform-browser": "^18.0.2",
     "@angular/forms": "^18.0.2",
