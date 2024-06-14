@@ -304,26 +304,43 @@ export class CdkRichTextEditorComponent
     }
   }
 
-  insertImage(
+  async insertImage(
     url: string,
     width: number,
     height: number
-  ): { id: string; elem?: HTMLImageElement } {
-    let selection = window.getSelection();
-    let id = "";
-    let elem = undefined;
-    if (selection && selection.rangeCount > 0) {
-      elem = document.createElement("img");
-      elem.id = id;
-      elem.src = url;
-      // img.width = width;
-      // img.height = height;
-      const range = selection.getRangeAt(0);
-      range.insertNode(elem);
+  ): Promise<{ id: string; elem?: HTMLImageElement }> {
+    try {
+      if (!url) {
+        throw new Error("Invalid image resource data.");
+      }
 
-      this._contentChanged();
+      // Check if the URL is valid (optional, depending on use case)
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Failed to load image.");
+      }
+
+      let selection = window.getSelection();
+      let id = "";
+      let elem;
+      if (selection && selection.rangeCount > 0) {
+        elem = document.createElement("img");
+        elem.id = `img-${Date.now()}`;
+        elem.src = url;
+        elem.width = width;
+        elem.height = height;
+
+        const range = selection.getRangeAt(0);
+        range.insertNode(elem);
+
+        this._contentChanged();
+      }
+      return { id, elem };
+    } catch (error) {
+      console.error("Error setting image:", error);
+      this.isUploading = false;
+      return { id: "", elem: undefined };
     }
-    return { id, elem };
   }
 
   toggleComponent(componentName: Type<Component>): void {
@@ -648,10 +665,10 @@ export class CdkRichTextEditorComponent
   }
 
   private _setImage(imageRes: IIMageRes): void {
-    let { url, elem } = imageRes;
-    elem.src = url;
-    this.isUploading = false;
-    this._contentChanged();
+      let { url, elem } = imageRes;
+      elem.src = url;
+      this.isUploading = false;
+      this._contentChanged();
   }
 
   private _isInlineTag(tag: string): boolean {
@@ -759,7 +776,9 @@ export class CdkRichTextEditorComponent
 
         const realHashtag = document.createElement("span");
         const viewRef: EmbeddedViewRef<Node> =
-        this.hashtagTemplate.createEmbeddedView({ value: {name: item.value} });
+          this.hashtagTemplate.createEmbeddedView({
+            value: { name: item.value },
+          });
         this.richTextContainer.insert(viewRef);
         for (let node of viewRef.rootNodes) {
           realHashtag.appendChild(node);
@@ -944,13 +963,13 @@ export class CdkRichTextEditorComponent
       if (this.uploadImageRequest) {
         file &&
           loadImage(file, (dataURI: string) => {
-            setTimeout(() => {
+            setTimeout(async() => {
               let id: string;
               let elem: HTMLImageElement | undefined;
               range &&
                 focusElementWithRange(this.richText.nativeElement, range);
               range &&
-                ({ id, elem } = this.insertImage(dataURI.toString(), 500, 500));
+                ({ id, elem } = await this.insertImage(dataURI.toString(), 500, 500));
               range && this._contentChanged();
               this.uploadImageRequest.emit({ file, elem });
             }, 10);
@@ -958,13 +977,13 @@ export class CdkRichTextEditorComponent
       } else {
         file &&
           loadImage(file, (dataURI: string) => {
-            setTimeout(() => {
+            setTimeout(async() => {
               let id: string;
               let elem: HTMLImageElement | undefined;
               range &&
                 focusElementWithRange(this.richText.nativeElement, range);
               range &&
-                ({ id, elem } = this.insertImage(dataURI.toString(), 500, 500));
+                ({ id, elem } = await this.insertImage(dataURI.toString(), 500, 500));
               range && this._contentChanged();
             }, 10);
           });
@@ -982,8 +1001,8 @@ export class CdkRichTextEditorComponent
       event.preventDefault();
       event.stopPropagation();
       const pasteFile = (file: File) => {
-        loadImage(file, (dataURI: string) => {
-          const { id, elem } = this.insertImage(dataURI.toString(), 500, 500);
+        loadImage(file, async(dataURI: string) => {
+          const { id, elem } = await this.insertImage(dataURI.toString(), 500, 500);
           if (this.uploadImageRequest) {
             this.isUploading = true;
             this.uploadImageRequest.emit({ file, elem });
