@@ -91,7 +91,7 @@ export class CdkRichTextEditorComponent
   }
   @Input() disabled: boolean | string = false;
   @Input() placeholder: string = "";
-  @Input() theme: 'light-theme' | 'dark-theme' = "light-theme";
+  @Input() theme: "light-theme" | "dark-theme" = "light-theme";
   // OUTPUTS
   @Output("uploadImageRequest") uploadImageRequest =
     new EventEmitter<IUploadReq>();
@@ -457,7 +457,11 @@ export class CdkRichTextEditorComponent
         const editor = ace.edit(element);
         editor.setOptions({ maxLines: Infinity });
         editor.session.setMode("ace/mode/javascript");
-        editor.setTheme(this.theme === 'dark-theme' ? "ace/theme/monokai" : "ace/theme/theme-crimson_editor");
+        editor.setTheme(
+          this.theme === "dark-theme"
+            ? "ace/theme/monokai"
+            : "ace/theme/theme-crimson_editor"
+        );
 
         // Updates a hidden input element with the editor's content on change.
         editor.session.on("change", () => {
@@ -478,7 +482,7 @@ export class CdkRichTextEditorComponent
 
         // Registers the editor and assigns a unique ID.
         this.codeEditors.push(editor);
-        element.id = `code_${this.codeEditors.length-1}`;
+        element.id = `code_${this.codeEditors.length - 1}`;
       }
     });
   }
@@ -527,7 +531,7 @@ export class CdkRichTextEditorComponent
 
   onHashgtagKeywords = (keywords: string) => {
     this.hashtagRequest.emit(keywords);
-  }
+  };
 
   getSuggestionList = (tag: string) => {
     return new Promise<CdkSuggestionSetting>((resolve, reject) => {
@@ -553,7 +557,6 @@ export class CdkRichTextEditorComponent
           }
         });
       }, 300);
-
     });
   };
 
@@ -756,7 +759,7 @@ export class CdkRichTextEditorComponent
 
         const realHashtag = document.createElement("span");
         const viewRef: EmbeddedViewRef<Node> =
-          this.hashtagTemplate.createEmbeddedView({ value: item.value });
+        this.hashtagTemplate.createEmbeddedView({ value: {name: item.value} });
         this.richTextContainer.insert(viewRef);
         for (let node of viewRef.rootNodes) {
           realHashtag.appendChild(node);
