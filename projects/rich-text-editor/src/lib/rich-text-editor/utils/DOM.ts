@@ -4,14 +4,19 @@ export function isRectEmpty(rect: DOMRect) {
   return rect.x == 0 && rect.y == 0 && rect.right == 0 && rect.bottom == 0;
 }
 
-export function focusElementWithRangeIfNotFocused(element: HTMLElement, range: Range) {
+function updateSelectionWithRange(range: Range): void {
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  if (range) {
+    selection?.addRange(range);
+  }
+}
+
+export function focusElementWithRangeIfNotFocused(element: HTMLElement, range: Range): void {
   if (document.activeElement !== element) {
     element.focus();
-
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    range && selection?.addRange(range);
   }
+  updateSelectionWithRange(range);
 }
 
 export function focusElementWithRange(element: HTMLElement, range: Range) {
@@ -49,87 +54,96 @@ export function findTextNodes(element: Element, pattern: string): Array<{ text: 
   element.childNodes.forEach(child => {
 
     if (child.nodeType == Node.TEXT_NODE && child.textContent && (matches = child.textContent.matchAll(new RegExp(pattern, "g")))) {
-
       for (let match of matches) {
         match.index !== undefined && textNodes.push({ index: match.index, text: child as Text });
       }
-
     }
   });
-
   (textNodes.length % 2 == 1) && textNodes.pop();
   return textNodes;
 }
 
 function isHashtagElement(element: Element, pattern: RegExp): boolean {
-  let textNodes: Text[] = [];
-  element.childNodes.forEach(child => {
-    if (child.nodeType == Node.TEXT_NODE) {
-      textNodes.push(child as Text);
-    }
-  });
+  const textContent = Array.from(element.childNodes)
+    .filter(child => child.nodeType === Node.TEXT_NODE)
+    .map(textNode => textNode.textContent)
+    .join('');
 
-  let text = textNodes.map(textNode => textNode.textContent).join('');
-
-  if (text.match(pattern)) {
-    return true;
-  }
-  return false;
+  return pattern.test(textContent);
 }
 
-export function createLiveHashtag(tag: string, value: any, template: TemplateRef<any>, viewContainer?: ViewContainerRef): HTMLElement {
+function createHashtagElement(tag: string, value: any, template: TemplateRef<any>, viewContainer?: ViewContainerRef): HTMLElement {
   const element = document.createElement('span');
-  element.setAttribute('hashtag_component', '' + tag);
+  element.setAttribute('hashtag_component', tag);
   element.setAttribute('contenteditable', 'false');
-  element.innerHTML = '';
-  const realHashtag = document.createElement('span');
-  const hiddenHashtag = document.createElement('span');
-  hiddenHashtag.style.display = "none";
-  hiddenHashtag.setAttribute('hashtag_code', tag);
-  hiddenHashtag.innerHTML = `${tag}{"id":"${value.id}","name":"${value.name}","iLiked":"${value.iLiked}","nLikes":"${value.nLikes}","createdAt":"${value.createdAt}"}${tag}`;
 
-  const viewRef: EmbeddedViewRef<Node> = template.createEmbeddedView({value});
-  viewContainer?.insert(viewRef);
-  viewRef.detectChanges();
-  for (let node of viewRef.rootNodes) {
-    realHashtag.appendChild(node);
-  }
+  const realHashtag = createRealHashtag(template, value, viewContainer);
+  const hiddenHashtag = createHiddenHashtag(tag, value);
 
-  element.innerHTML = '';
   element.appendChild(realHashtag);
   element.appendChild(hiddenHashtag);
 
   return element;
 }
 
-export function makeLiveHashtags(root: HTMLElement, tag: string, template: TemplateRef<any>, viewContainer?: ViewContainerRef): any {
-  const selection = window.getSelection();
-  if (selection == null) {
-    return;
-  }
-  let hashtag = tag;
+function createRealHashtag(template: TemplateRef<any>, value: any, viewContainer?: ViewContainerRef): HTMLElement {
+  const realHashtag = document.createElement('span');
+  const viewRef: EmbeddedViewRef<Node> = template.createEmbeddedView({ value });
+  viewContainer?.insert(viewRef);
+  viewRef.detectChanges();
 
-  const nodes: Element[] = [];
-  const elements = root.querySelectorAll('*'); // Select all elements
-  const pattern = new RegExp(`${hashtag}(.*?)${hashtag}`);
+  viewRef.rootNodes.forEach(node => realHashtag.appendChild(node));
+
+  return realHashtag;
+}
+
+function createHiddenHashtag(tag: string, value: any): HTMLElement {
+  const hiddenHashtag = document.createElement('span');
+  hiddenHashtag.style.display = "none";
+  hiddenHashtag.setAttribute('hashtag_code', tag);
+  hiddenHashtag.innerHTML = `${tag}{"id":"${value.id}","name":"${value.name}","iLiked":"${value.iLiked}","nLikes":"${value.nLikes}","createdAt":"${value.createdAt}"}${tag}`;
+
+  return hiddenHashtag;
+}
+
+export function createLiveHashtag(tag: string, value: any, template: TemplateRef<any>, viewContainer?: ViewContainerRef): HTMLElement {
+  return createHashtagElement(tag, JSON.parse(value), template, viewContainer);
+}
+
+export function createLiveImgtag(tag: string, value: any, template: TemplateRef<any>, viewContainer?: ViewContainerRef): HTMLElement {
+  const element = document.createElement('img');
+  element.src= value;
+  element.alt = 'Image';
+
+  return element;
+}
+
+export function makeLiveHashtags(root: HTMLElement, tag: string, template: TemplateRef<any>, viewContainer?: ViewContainerRef): any {
+  return processLiveElements(root, tag, template, viewContainer, createLiveHashtag);
+}
+
+export function makeLiveImagetags(root: HTMLElement, tag: string): any {
+  return processLiveElements(root, tag, undefined, undefined, createLiveImgtag);
+}
+
+function processLiveElements(root: HTMLElement, tag: string, template: TemplateRef<any> | undefined, viewContainer: ViewContainerRef | undefined, createLiveElement: Function): any {
+  const selection = window.getSelection();
+  if (!selection) return;
+
+  const pattern = new RegExp(`${tag}(.*?)${tag}`);
+  const elements = Array.from(root.querySelectorAll('*')).filter(el => isHashtagElement(el, pattern));
 
   if (isHashtagElement(root, pattern)) {
-    nodes.push(root);
+    elements.push(root);
   }
+
+  const liveElements:any = [];
+
   elements.forEach(element => {
-    if (isHashtagElement(element, pattern)) {
-      nodes.push(element);
-    }
-  });
-
-  let libHashtags = [];
-
-  for (let element of nodes) {
-    let textNodes = findTextNodes(element, hashtag);
+    let textNodes = findTextNodes(element, tag);
     for (let i = 0; i < textNodes.length; i += 2) {
-
       const startNode = textNodes[i].text;
-      const startIndex = textNodes[i].index + hashtag.length;
+      const startIndex = textNodes[i].index + tag.length;
       const endNode = textNodes[i + 1].text;
       const endIndex = textNodes[i + 1].index;
 
@@ -138,48 +152,23 @@ export function makeLiveHashtags(root: HTMLElement, tag: string, template: Templ
 
       let value = startNode.textContent.substring(startIndex, endIndex);
 
-      const liveHashtag = createLiveHashtag(tag, JSON.parse(value), template, viewContainer);
+      const liveElement = createLiveElement(tag, value, template, viewContainer);
 
       const range = document.createRange();
-      range.setStart(startNode, startIndex - hashtag.length);
-      range.setEnd(endNode, endIndex + hashtag.length);
+      range.setStart(startNode, startIndex - tag.length);
+      range.setEnd(endNode, endIndex + tag.length);
 
       selection.removeAllRanges();
       selection.addRange(range);
       range.extractContents();
-      range.insertNode(liveHashtag);
-      libHashtags.push(liveHashtag);
+      range.insertNode(liveElement);
+      liveElements.push(liveElement);
 
-      textNodes = findTextNodes(element, hashtag);
+      textNodes = findTextNodes(element, tag);
       i -= 2;
     }
-  }
+  });
+
   selection.removeAllRanges();
-  return libHashtags;
+  return liveElements;
 }
-
-// Abandoned attempt to integrate highlight.js
-// export function convertHTML2Hightlighted(htmlContent: string): string {
-//   let textContent = htmlContent;
-//   console.log("textContent = ", textContent);
-//   if (textContent) {
-//     textContent = textContent.replaceAll('<div><br></div>', '<div></div>');
-//     textContent = textContent.replaceAll('<div><br/></div>', '<div></div>');
-//     textContent = convert(textContent,{ wordwrap: false });
-//     const hresult = hljs.highlightAuto(textContent)
-//     return hresult.value.replaceAll('\n', '<br/>');
-//   }
-//   return "";
-// }
-
-// another <code> attempt
-// export function refactorToDisplay(root: HTMLElement, tag: string, template: TemplateRef<any>, viewContainer?: ViewContainerRef) {
-//   makeLiveHashtags(root, tag, template, viewContainer);
-//   let clonedTextNode = root.cloneNode(true) as HTMLElement;
-//   // const codeTags = clonedTextNode.querySelectorAll('code');
-//   // codeTags.forEach(codeTag=> {
-//   //     codeTag.innerHTML = convertHTML2Hightlighted(codeTag.innerHTML);
-//   // })
-//   root.innerHTML = clonedTextNode.innerHTML;
-//   clonedTextNode.remove();
-// }

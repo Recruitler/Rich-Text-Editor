@@ -29,8 +29,9 @@ import {
   getRangeFromPosition,
   isRectEmpty,
   makeLiveHashtags,
+  makeLiveImagetags,
 } from "../utils/DOM";
-import { HASHTAG, HASHTAG_TRIGGER, TOOLBAR_ITEMS } from "../utils/config";
+import { HASHTAG, HASHTAG_TRIGGER, IMGTAG, TOOLBAR_ITEMS } from "../utils/config";
 import { loadImage } from "../utils/image";
 import { CircularProgressComponent } from "./circular-progressive/circular-progressive.component";
 import { CdkSuggestionComponent } from "./suggestion/suggestion.component";
@@ -643,6 +644,14 @@ export class CdkRichTextEditorComponent
       }
     });
 
+    // Convert Image to imageTag
+    const images = clonedTextNode.querySelectorAll("img");
+    images.forEach((image: any) => {
+        const textNode = document.createTextNode(`${IMGTAG}${image.src}${IMGTAG}`);
+        image.replaceWith(textNode);
+
+    });
+
     const editorCode = clonedTextNode.innerHTML;
     clonedTextNode.remove();
 
@@ -656,6 +665,10 @@ export class CdkRichTextEditorComponent
       HASHTAG,
       this.hashtagTemplate,
       this.richTextContainer
+    );
+    makeLiveImagetags(
+      this.richText.nativeElement,
+      IMGTAG,
     );
     this._contentChanged();
   };

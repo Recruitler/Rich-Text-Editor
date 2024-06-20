@@ -7,6 +7,7 @@ enum MarkTypes {
 }
 
 export const HASHTAG = "--##--";
+export const IMGTAG = "--%%--";
 export const HASHTAG_TRIGGER = "#";
 export const TOOLBAR_ITEMS = [
   {
