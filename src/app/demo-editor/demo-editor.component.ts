@@ -81,7 +81,7 @@ export class DemoEditorComponent implements OnInit {
   uploadImageResult: IIMageRes = { url: "", elem: { src: "" } };
   // the RTE formControl
   content = this.formBuilder.control(
-    { value: "--##--{\"id\":\"a425c190-09cc-40a2-a540-115b889ae770\",\"name\":\"test4\",\"hasVoted\":\"false\",\"nLikes\":\"0\",\"createdAt\":\"some-date\"}--##--", disabled: false },
+    { value: '--##--{"id":"a425c190-09cc-40a2-a540-115b889ae770","name":"test4","iLiked":"undefined","nLikes":"0","createdAt":"some-date"}--##-- test content --%%--https://ucarecdn.com/7b641f9a-6c9a-4c86-a7db-4532bd165b60/portfolio2.jpg--%%--', disabled: false },
     [Validators.required]
   );
   chars: number = 0;
