@@ -31,7 +31,12 @@ import {
   makeLiveHashtags,
   makeLiveImagetags,
 } from "../utils/DOM";
-import { HASHTAG, HASHTAG_TRIGGER, IMGTAG, TOOLBAR_ITEMS } from "../utils/config";
+import {
+  HASHTAG,
+  HASHTAG_TRIGGER,
+  IMGTAG,
+  TOOLBAR_ITEMS,
+} from "../utils/config";
 import { loadImage } from "../utils/image";
 import { CircularProgressComponent } from "./circular-progressive/circular-progressive.component";
 import { CdkSuggestionComponent } from "./suggestion/suggestion.component";
@@ -41,6 +46,7 @@ import {
   CdkSuggestionSetting,
   CdkToolbarItemSetting,
   IIMageRes,
+  IImgInfo,
   IUploadReq,
   ToolbarItem,
 } from "../interfaces";
@@ -93,6 +99,9 @@ export class CdkRichTextEditorComponent
   @Input() disabled: boolean | string = false;
   @Input() placeholder: string = "";
   @Input() theme: "light-theme" | "dark-theme" = "light-theme";
+  @Input() imgUrl!: string;
+  @Input() imgAccountId?: string | null;
+  @Input() variant?: string | null;
   // OUTPUTS
   @Output("uploadImageRequest") uploadImageRequest =
     new EventEmitter<IUploadReq>();
@@ -168,7 +177,7 @@ export class CdkRichTextEditorComponent
 
   handleClickAddImage(): void {
     const url = window.prompt("Input image url");
-    if (url) this.insertImage(url, 500, 500);
+    if (url) this.insertImage(url);
   }
 
   toggleFormat(format: any): void {
@@ -306,9 +315,7 @@ export class CdkRichTextEditorComponent
   }
 
   async insertImage(
-    url: string,
-    width: number,
-    height: number
+    url: string
   ): Promise<{ id: string; elem?: HTMLImageElement }> {
     try {
       if (!url) {
@@ -328,8 +335,6 @@ export class CdkRichTextEditorComponent
         elem = document.createElement("img");
         elem.id = `img-${Date.now()}`;
         elem.src = url;
-        elem.width = width;
-        elem.height = height;
 
         const range = selection.getRangeAt(0);
         range.insertNode(elem);
@@ -647,9 +652,10 @@ export class CdkRichTextEditorComponent
     // Convert Image to imageTag
     const images = clonedTextNode.querySelectorAll("img");
     images.forEach((image: any) => {
-        const textNode = document.createTextNode(`${IMGTAG}${image.src}${IMGTAG}`);
-        image.replaceWith(textNode);
-
+      const urlParts = image.src.split("/");
+      const imgId = urlParts[urlParts.length - 2];
+      const textNode = document.createTextNode(`${IMGTAG}${imgId}${IMGTAG}`);
+      image.replaceWith(textNode);
     });
 
     const editorCode = clonedTextNode.innerHTML;
@@ -666,10 +672,13 @@ export class CdkRichTextEditorComponent
       this.hashtagTemplate,
       this.richTextContainer
     );
-    makeLiveImagetags(
-      this.richText.nativeElement,
-      IMGTAG,
-    );
+
+    const imgInfo: IImgInfo = {
+      domain: this.imgUrl,
+      accountId: this.imgAccountId,
+      variant: this.variant,
+    };
+    makeLiveImagetags(this.richText.nativeElement, imgInfo, IMGTAG);
     this._contentChanged();
   };
 
@@ -678,10 +687,10 @@ export class CdkRichTextEditorComponent
   }
 
   private _setImage(imageRes: IIMageRes): void {
-      let { url, elem } = imageRes;
-      elem.src = url;
-      this.isUploading = false;
-      this._contentChanged();
+    let { url, elem } = imageRes;
+    elem.src = url;
+    this.isUploading = false;
+    this._contentChanged();
   }
 
   private _isInlineTag(tag: string): boolean {
@@ -976,13 +985,13 @@ export class CdkRichTextEditorComponent
       if (this.uploadImageRequest) {
         file &&
           loadImage(file, (dataURI: string) => {
-            setTimeout(async() => {
+            setTimeout(async () => {
               let id: string;
               let elem: HTMLImageElement | undefined;
               range &&
                 focusElementWithRange(this.richText.nativeElement, range);
               range &&
-                ({ id, elem } = await this.insertImage(dataURI.toString(), 500, 500));
+                ({ id, elem } = await this.insertImage(dataURI.toString()));
               range && this._contentChanged();
               this.uploadImageRequest.emit({ file, elem });
             }, 10);
@@ -990,13 +999,13 @@ export class CdkRichTextEditorComponent
       } else {
         file &&
           loadImage(file, (dataURI: string) => {
-            setTimeout(async() => {
+            setTimeout(async () => {
               let id: string;
               let elem: HTMLImageElement | undefined;
               range &&
                 focusElementWithRange(this.richText.nativeElement, range);
               range &&
-                ({ id, elem } = await this.insertImage(dataURI.toString(), 500, 500));
+                ({ id, elem } = await this.insertImage(dataURI.toString()));
               range && this._contentChanged();
             }, 10);
           });
@@ -1014,8 +1023,8 @@ export class CdkRichTextEditorComponent
       event.preventDefault();
       event.stopPropagation();
       const pasteFile = (file: File) => {
-        loadImage(file, async(dataURI: string) => {
-          const { id, elem } = await this.insertImage(dataURI.toString(), 500, 500);
+        loadImage(file, async (dataURI: string) => {
+          const { id, elem } = await this.insertImage(dataURI.toString());
           if (this.uploadImageRequest) {
             this.isUploading = true;
             this.uploadImageRequest.emit({ file, elem });
