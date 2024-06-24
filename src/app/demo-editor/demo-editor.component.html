@@ -22,7 +22,7 @@
 </ng-template>
 
 <ng-template #hashtagSelectionTemplate let-value="value">
-  <app-hashtag> {{ value?.name ? '#' + value?.name : '' }} </app-hashtag>
+  <app-hashtag> {{ value?.name ? "#" + value?.name : "" }} </app-hashtag>
 </ng-template>
 
 <h2>Recruitler.com's Rich Text Editor</h2>
@@ -38,7 +38,10 @@
 <div class="demo-editor">
   <recruitler-rte
     #editor
-    [theme] = "currentTheme"
+    [theme]="currentTheme"
+    [imgUrl]="imgUrl"
+    [imgAccountId]="imgAccountId"
+    [variant]="variant"
     [hashtagItemTemplate]="hashtagItemTemplate"
     [hashtagTemplate]="hashtagSelectionTemplate"
     (hashtagRequest)="hashtagSearch($event)"
