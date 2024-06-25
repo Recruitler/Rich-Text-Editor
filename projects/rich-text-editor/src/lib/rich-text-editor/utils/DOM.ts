@@ -107,7 +107,9 @@ function createRealHashtag(
   viewContainer?: ViewContainerRef
 ): HTMLElement {
   const realHashtag = document.createElement("span");
-  const viewRef: EmbeddedViewRef<Node> = template.createEmbeddedView({ value });
+  const viewRef: EmbeddedViewRef<Node> = template.createEmbeddedView({
+    value: { name: value.name },
+  });
   viewContainer?.insert(viewRef);
   viewRef.detectChanges();
 
