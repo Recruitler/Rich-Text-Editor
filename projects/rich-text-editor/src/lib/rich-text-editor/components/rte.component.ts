@@ -799,7 +799,7 @@ export class CdkRichTextEditorComponent
         const realHashtag = document.createElement("span");
         const viewRef: EmbeddedViewRef<Node> =
           this.hashtagTemplate.createEmbeddedView({
-            value: { name: item.value },
+            value: { name: item.value.name },
           });
         this.richTextContainer.insert(viewRef);
         for (let node of viewRef.rootNodes) {

@@ -199,15 +199,15 @@ export class DemoEditorComponent implements OnInit {
     this.hashtagResults = [
       {
         key: "Red",
-        value: "Red",
+        value: { name: "Red" },
       },
       {
         key: "Green",
-        value: "Green",
+        value: { name: "Green" },
       },
       {
         key: "Blue",
-        value: "Blue",
+        value: { name: "Blue" },
       },
     ];
   }
