@@ -50,7 +50,6 @@ rte-suggestion {
   ol {}
   ol li {}
   ul li {}
-  img {}
   
   a,
   abbr,
@@ -61,7 +60,6 @@ rte-suggestion {
   cite,
   em,
   i,
-  img,
   input,
   label,
   q,
@@ -138,6 +136,11 @@ rte-suggestion {
     display: block; /* For Firefox */
     color: rgb(var(--body-text));
     // opacity: 0.65;
+  }
+
+  img {
+    width: 100%;
+    margin-top: 12px;
   }
 }
 
