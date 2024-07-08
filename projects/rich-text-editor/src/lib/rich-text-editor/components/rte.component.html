@@ -10,6 +10,13 @@
     </button>
     }
   </div>
+  <!-- Hidden File Uploader Button -->
+  <input
+    type="file"
+    #fileInput
+    (change)="onFileSelected($event)"
+    style="display: none"
+  />
 </ng-template>
 
 <div #templates style="display: none">
