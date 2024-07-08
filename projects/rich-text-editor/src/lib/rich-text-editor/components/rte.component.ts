@@ -81,6 +81,7 @@ export class CdkRichTextEditorComponent
   @ViewChild("quickToolbar") quickToolbarElement!: ElementRef<HTMLElement>;
   @ViewChild("suggestion") suggestion!: CdkSuggestionComponent;
   @ViewChild("defaultToolbar") defaultToolbar!: TemplateRef<any>;
+  @ViewChild("fileInput", { static: false }) fileInput!: ElementRef;
   // INPUTS
   @Input("toolbarTemplate") toolbarTemplate!: TemplateRef<any>;
   @Input("cdkDefaultToolbarItems")
@@ -173,11 +174,6 @@ export class CdkRichTextEditorComponent
         }
       }
     });
-  }
-
-  handleClickAddImage(): void {
-    const url = window.prompt("Input image url");
-    if (url) this.insertImage(url);
   }
 
   toggleFormat(format: any): void {
@@ -603,7 +599,7 @@ export class CdkRichTextEditorComponent
         item.active = this.isComponentActive(component);
       }
     } else if (item.action == "image") {
-      this.handleClickAddImage();
+      this.onUploadButtonClick();
     } else {
       this.toggleFormat(item.action);
       item.active = this.isFormatActive(item.action);
@@ -619,7 +615,7 @@ export class CdkRichTextEditorComponent
         this.toggleComponent(component);
       }
     } else if (item.action == "image") {
-      this.handleClickAddImage();
+      this.onUploadButtonClick();
     } else {
       this.toggleFormat(item.action);
     }
@@ -979,37 +975,7 @@ export class CdkRichTextEditorComponent
       event.preventDefault();
       event.stopPropagation();
       const range = getRangeFromPosition(x, y);
-      const formData = new FormData();
-      file && formData.append("photo", file, file.name);
-
-      if (this.uploadImageRequest) {
-        file &&
-          loadImage(file, (dataURI: string) => {
-            setTimeout(async () => {
-              let id: string;
-              let elem: HTMLImageElement | undefined;
-              range &&
-                focusElementWithRange(this.richText.nativeElement, range);
-              range &&
-                ({ id, elem } = await this.insertImage(dataURI.toString()));
-              range && this._contentChanged();
-              this.uploadImageRequest.emit({ file, elem });
-            }, 10);
-          });
-      } else {
-        file &&
-          loadImage(file, (dataURI: string) => {
-            setTimeout(async () => {
-              let id: string;
-              let elem: HTMLImageElement | undefined;
-              range &&
-                focusElementWithRange(this.richText.nativeElement, range);
-              range &&
-                ({ id, elem } = await this.insertImage(dataURI.toString()));
-              range && this._contentChanged();
-            }, 10);
-          });
-      }
+      this.handleFile(file, range);
     }
   };
 
@@ -1145,4 +1111,39 @@ export class CdkRichTextEditorComponent
     let nodes = this.richText.nativeElement.childNodes;
     this.nodesReplaceContent(nodes, this.urlify);
   };
+
+  onUploadButtonClick(): void {
+    this.fileInput.nativeElement.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      if (file && file.type.startsWith("image/")) {
+        this.handleFile(file);
+      }
+    }
+  }
+
+  private async handleFile(file: File, range?: Range | null) {
+    loadImage(file, async (dataURI: string) => {
+      setTimeout(async () => {
+        let id: string;
+        let elem: HTMLImageElement | undefined;
+
+        if (range) {
+          focusElementWithRange(this.richText.nativeElement, range);
+        }
+
+        ({ id, elem } = await this.insertImage(dataURI.toString()));
+        this._contentChanged();
+
+        if (this.uploadImageRequest) {
+          this.uploadImageRequest.emit({ file, elem });
+        }
+      }, 10);
+    });
+  }
 }
