@@ -59,3 +59,10 @@
     <ng-content></ng-content>
   </div>
 </div>
+@if (isVisibleEmojiModal){
+<emoji-mart
+  (emojiSelect)="addEmoji($event)"
+  class="emoji"
+  [showPreview]="false"
+></emoji-mart>
+}

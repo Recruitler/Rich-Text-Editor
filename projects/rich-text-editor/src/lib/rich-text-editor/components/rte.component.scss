@@ -6,6 +6,7 @@
 //     min-height: 1rem;
 //   }
 // }
+@import "@ctrl/ngx-emoji-mart/picker";
 
 rte-suggestion {
   position: absolute;
@@ -34,23 +35,32 @@ rte-suggestion {
     box-shadow: none;
     border: 0;
     outline: none;
-  }  
+  }
   h1 {
     color: rgb(66, 114, 89);
   }
   h2 {
     color: rgb(193, 211, 113);
   }
-  h3 {}
-  h4 {}
-  h5 {}
-  b {}
-  i {}
-  u {}
-  ol {}
-  ol li {}
-  ul li {}
-  
+  h3 {
+  }
+  h4 {
+  }
+  h5 {
+  }
+  b {
+  }
+  i {
+  }
+  u {
+  }
+  ol {
+  }
+  ol li {
+  }
+  ul li {
+  }
+
   a,
   abbr,
   b,
@@ -70,7 +80,7 @@ rte-suggestion {
   textarea {
     display: inline;
   }
-  
+
   div,
   p,
   blockquote,
@@ -116,7 +126,7 @@ rte-suggestion {
     min-height: 1rem;
     min-width: 1rem;
   }
-  
+
   .ace_editor {
     & div {
       font-family: monospace;
@@ -124,7 +134,7 @@ rte-suggestion {
     height: 84px;
     border-radius: 6px;
     border: 1px solid lightgrey;
-    margin: 4px 0px
+    margin: 4px 0px;
   }
 
   /* ------------------------------------------------------------------------ *
@@ -235,4 +245,10 @@ rte-suggestion {
     margin-left: -8px;
     margin-top: -1px;
   }
+}
+
+.emoji {
+  position: absolute;
+  z-index: 1000;
+  bottom: 10px;
 }
