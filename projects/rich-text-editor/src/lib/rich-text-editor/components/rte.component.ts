@@ -17,6 +17,7 @@ import {
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import { BehaviorSubject, take } from "rxjs";
+import { PickerComponent } from "@ctrl/ngx-emoji-mart";
 
 import * as ace from "ace-builds";
 import "ace-builds/src-noconflict/ace";
@@ -69,6 +70,7 @@ import {
     CircularProgressComponent,
     SafeDOMPipe,
     CommonModule,
+    PickerComponent,
   ],
   encapsulation: ViewEncapsulation.None,
 })
@@ -125,6 +127,8 @@ export class CdkRichTextEditorComponent
   links: string[] = [];
   codeEditors: any = [];
   editorEdgeStatus: "top" | "in" | "bottom" | "empty" = "in"; // Code editor cursor stauts
+  isVisibleEmojiModal: boolean = false;
+  private savedSelection: Range | null = null;
 
   constructor(private domSantanizer: SafeDOMPipe) {
     this.toolbarItems = TOOLBAR_ITEMS.map((item) => ({
@@ -616,6 +620,8 @@ export class CdkRichTextEditorComponent
       }
     } else if (item.action == "image") {
       this.onUploadButtonClick();
+    } else if (item.action == "emoji") {
+      this.showEmoji();
     } else {
       this.toggleFormat(item.action);
     }
@@ -1145,5 +1151,57 @@ export class CdkRichTextEditorComponent
         }
       }, 10);
     });
+  }
+
+  addEmoji(event: any) {
+    this.isVisibleEmojiModal = false;
+    this.insertText(event.emoji.native);
+  }
+
+  private insertText(content: string) {
+    if (this.savedSelection) {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        selection.removeAllRanges();
+        selection.addRange(this.savedSelection);
+
+        const range = this.savedSelection;
+        range.deleteContents();
+
+        const textNode = document.createTextNode(content);
+        range.insertNode(textNode);
+
+        // Move the caret after the inserted content
+        range.setStartAfter(textNode);
+        range.setEndAfter(textNode);
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        this._contentChanged();
+      }
+    }
+  }
+
+  private saveSelection() {
+    // Get the current selection
+    const selection = window.getSelection();
+
+    if (selection) {
+      const anchorNode = selection.anchorNode;
+      const focusNode = selection.focusNode;
+
+      // Check if the selection is within the richTextEditor
+      const isSelectionInDiv =
+        this.richText.nativeElement.contains(anchorNode) &&
+        this.richText.nativeElement.contains(focusNode);
+
+      if (isSelectionInDiv)
+        this.savedSelection = selection.getRangeAt(0).cloneRange();
+    }
+  }
+
+  showEmoji() {
+    this.isVisibleEmojiModal = true;
+    this.saveSelection();
   }
 }
