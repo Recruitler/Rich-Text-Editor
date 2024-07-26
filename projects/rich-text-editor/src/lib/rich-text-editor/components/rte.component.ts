@@ -483,7 +483,7 @@ export class CdkRichTextEditorComponent
         editor.setTheme(
           this.theme === "dark-theme"
             ? "ace/theme/monokai"
-            : "ace/theme/theme-crimson_editor"
+            : "ace/theme/crimson_editor"
         );
 
         // Updates a hidden input element with the editor's content on change.
@@ -637,9 +637,16 @@ export class CdkRichTextEditorComponent
     // Remove formatted code tags
     const codeTags = clonedTextNode.querySelectorAll("code");
     codeTags.forEach((codeTag) => {
-      codeTag.attributes.removeNamedItem("class");
-      codeTag.attributes.removeNamedItem("style");
-      codeTag.innerHTML = codeTag.getElementsByTagName("input")[0].value;
+      if (codeTag.hasAttribute("class")) {
+        codeTag.removeAttribute("class");
+      }
+      if (codeTag.hasAttribute("style")) {
+        codeTag.removeAttribute("style");
+      }
+      const inputElement = codeTag.querySelector("input");
+      if (inputElement && inputElement?.value) {
+        codeTag.innerHTML = inputElement.value;
+      }
     });
 
     // Remove formatted hashtags
