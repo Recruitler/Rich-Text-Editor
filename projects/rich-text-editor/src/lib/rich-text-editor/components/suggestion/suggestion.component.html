@@ -5,7 +5,10 @@
     <ng-container
       *ngTemplateOutlet="
         itemTemplate;
-        context: { $implicit: suggestion.value, active: i == selectedIndex }
+        context: {
+          $implicit: suggestion.value.name,
+          active: i == selectedIndex
+        }
       "
     />
   </li>

@@ -1,12 +1,12 @@
 {
   "name": "@recruitler/rte",
-  "version": "0.3.2",
+  "version": "0.3.17",
   "peerDependencies": {
-    "@angular/platform-browser": "18.0.2",
-    "@angular/forms": "18.0.2",
-    "@angular/common": "18.0.2",
+    "@angular/platform-browser": "18.2.3",
+    "@angular/forms": "18.2.3",
+    "@angular/common": "18.2.3",
     "injection-js": "2.4.0",
-    "@angular/core": "18.0.2",
+    "@angular/core": "18.2.3",
     "html-to-text": "9.0.5"
   },
   "dependencies": {
@@ -18,8 +18,8 @@
     "packagr": "ng-packagr -p ng-package.json  --config tsconfig.lib.json"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "18.0.3",
-    "@angular/cli": "18.0.3",
+    "@angular-devkit/build-angular": "18.2.3",
+    "@angular/cli": "18.2.3",
     "ng-packagr": "18.0.0"
   }
 }

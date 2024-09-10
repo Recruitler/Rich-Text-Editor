@@ -1,6 +1,6 @@
 <ng-template #defaultToolbar>
   <div class="rte-toolbar-btn-group rte-popup">
-    @for (item of toolbarItems; track item.action) {
+    @for (item of toolbarItems; let i = $index; track 'key' + i) {
     <button
       class="rte-toolbar-btn rte-active"
       [ngClass]="{ 'rte-active': item.active }"
@@ -10,6 +10,13 @@
     </button>
     }
   </div>
+  <!-- Hidden File Uploader Button -->
+  <input
+    type="file"
+    #fileInput
+    (change)="onFileSelected($event)"
+    style="display: none"
+  />
 </ng-template>
 
 <div #templates style="display: none">
@@ -18,9 +25,9 @@
 
 <div class="rte-wrapper">
   @if (isUploading) {
-    <div class="rte-uploading-progress">
-      <rte-circular-progress />
-    </div>
+  <div class="rte-uploading-progress">
+    <rte-circular-progress />
+  </div>
   }
 
   <div #quickToolbar class="rte-quick-toolbar">
@@ -52,3 +59,10 @@
     <ng-content></ng-content>
   </div>
 </div>
+@if (isVisibleEmojiModal){
+<emoji-mart
+  (emojiSelect)="addEmoji($event)"
+  class="emoji"
+  [showPreview]="false"
+></emoji-mart>
+}

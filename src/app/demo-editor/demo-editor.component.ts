@@ -81,7 +81,11 @@ export class DemoEditorComponent implements OnInit {
   uploadImageResult: IIMageRes = { url: "", elem: { src: "" } };
   // the RTE formControl
   content = this.formBuilder.control(
-    { value: '--##--{"id":"a425c190-09cc-40a2-a540-115b889ae770","name":"test4","iLiked":"undefined","nLikes":"0","createdAt":"some-date"}--##-- test content --%%--https://ucarecdn.com/7b641f9a-6c9a-4c86-a7db-4532bd165b60/portfolio2.jpg--%%--', disabled: false },
+    {
+      value:
+        '--##--{"id":"a425c190-09cc-40a2-a540-115b889ae770","name":"test4","iLiked":"undefined","nLikes":"0","createdAt":"some-date"}--##-- test content <code>// Function to calculate factorial using recursion\nfunction factorial(n) {\n    if (n === 0 || n === 1) {\n        return 1;\n    } else {\n        return n * factorial(n - 1);\n    }\n}\n\n// Example usage:\nconst num = 5;\nconst result = factorial(num);\nconsole.log(`Factorial of ${num} is: ${result}`);</code><br /><br />',
+      disabled: false,
+    },
     [Validators.required]
   );
   chars: number = 0;
@@ -111,7 +115,10 @@ export class DemoEditorComponent implements OnInit {
     },
   ];
   embedContent = "";
-  currentTheme: 'light-theme' | 'dark-theme' = 'dark-theme';
+  currentTheme: "light-theme" | "dark-theme" = "dark-theme";
+  imgUrl: string = "https://ucarecdn.com/";
+  imgAccountId: string | null = null;
+  variant: string | null = null;
 
   constructor(private formBuilder: FormBuilder) {}
 
@@ -192,15 +199,15 @@ export class DemoEditorComponent implements OnInit {
     this.hashtagResults = [
       {
         key: "Red",
-        value: "Red",
+        value: { name: "Red" },
       },
       {
         key: "Green",
-        value: "Green",
+        value: { name: "Green" },
       },
       {
         key: "Blue",
-        value: "Blue",
+        value: { name: "Blue" },
       },
     ];
   }

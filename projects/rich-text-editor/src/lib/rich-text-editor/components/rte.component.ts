@@ -17,6 +17,7 @@ import {
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import { BehaviorSubject, take } from "rxjs";
+import { PickerComponent } from "@ctrl/ngx-emoji-mart";
 
 import * as ace from "ace-builds";
 import "ace-builds/src-noconflict/ace";
@@ -31,7 +32,12 @@ import {
   makeLiveHashtags,
   makeLiveImagetags,
 } from "../utils/DOM";
-import { HASHTAG, HASHTAG_TRIGGER, IMGTAG, TOOLBAR_ITEMS } from "../utils/config";
+import {
+  HASHTAG,
+  HASHTAG_TRIGGER,
+  IMGTAG,
+  TOOLBAR_ITEMS,
+} from "../utils/config";
 import { loadImage } from "../utils/image";
 import { CircularProgressComponent } from "./circular-progressive/circular-progressive.component";
 import { CdkSuggestionComponent } from "./suggestion/suggestion.component";
@@ -41,6 +47,7 @@ import {
   CdkSuggestionSetting,
   CdkToolbarItemSetting,
   IIMageRes,
+  IImgInfo,
   IUploadReq,
   ToolbarItem,
 } from "../interfaces";
@@ -63,6 +70,7 @@ import {
     CircularProgressComponent,
     SafeDOMPipe,
     CommonModule,
+    PickerComponent,
   ],
   encapsulation: ViewEncapsulation.None,
 })
@@ -75,6 +83,7 @@ export class CdkRichTextEditorComponent
   @ViewChild("quickToolbar") quickToolbarElement!: ElementRef<HTMLElement>;
   @ViewChild("suggestion") suggestion!: CdkSuggestionComponent;
   @ViewChild("defaultToolbar") defaultToolbar!: TemplateRef<any>;
+  @ViewChild("fileInput", { static: false }) fileInput!: ElementRef;
   // INPUTS
   @Input("toolbarTemplate") toolbarTemplate!: TemplateRef<any>;
   @Input("cdkDefaultToolbarItems")
@@ -93,6 +102,9 @@ export class CdkRichTextEditorComponent
   @Input() disabled: boolean | string = false;
   @Input() placeholder: string = "";
   @Input() theme: "light-theme" | "dark-theme" = "light-theme";
+  @Input() imgUrl!: string;
+  @Input() imgAccountId?: string | null;
+  @Input() variant?: string | null;
   // OUTPUTS
   @Output("uploadImageRequest") uploadImageRequest =
     new EventEmitter<IUploadReq>();
@@ -115,6 +127,8 @@ export class CdkRichTextEditorComponent
   links: string[] = [];
   codeEditors: any = [];
   editorEdgeStatus: "top" | "in" | "bottom" | "empty" = "in"; // Code editor cursor stauts
+  isVisibleEmojiModal: boolean = false;
+  private savedSelection: Range | null = null;
 
   constructor(private domSantanizer: SafeDOMPipe) {
     this.toolbarItems = TOOLBAR_ITEMS.map((item) => ({
@@ -164,11 +178,6 @@ export class CdkRichTextEditorComponent
         }
       }
     });
-  }
-
-  handleClickAddImage(): void {
-    const url = window.prompt("Input image url");
-    if (url) this.insertImage(url, 500, 500);
   }
 
   toggleFormat(format: any): void {
@@ -306,9 +315,7 @@ export class CdkRichTextEditorComponent
   }
 
   async insertImage(
-    url: string,
-    width: number,
-    height: number
+    url: string
   ): Promise<{ id: string; elem?: HTMLImageElement }> {
     try {
       if (!url) {
@@ -328,8 +335,6 @@ export class CdkRichTextEditorComponent
         elem = document.createElement("img");
         elem.id = `img-${Date.now()}`;
         elem.src = url;
-        elem.width = width;
-        elem.height = height;
 
         const range = selection.getRangeAt(0);
         range.insertNode(elem);
@@ -478,7 +483,7 @@ export class CdkRichTextEditorComponent
         editor.setTheme(
           this.theme === "dark-theme"
             ? "ace/theme/monokai"
-            : "ace/theme/theme-crimson_editor"
+            : "ace/theme/crimson_editor"
         );
 
         // Updates a hidden input element with the editor's content on change.
@@ -598,7 +603,7 @@ export class CdkRichTextEditorComponent
         item.active = this.isComponentActive(component);
       }
     } else if (item.action == "image") {
-      this.handleClickAddImage();
+      this.onUploadButtonClick();
     } else {
       this.toggleFormat(item.action);
       item.active = this.isFormatActive(item.action);
@@ -614,7 +619,9 @@ export class CdkRichTextEditorComponent
         this.toggleComponent(component);
       }
     } else if (item.action == "image") {
-      this.handleClickAddImage();
+      this.onUploadButtonClick();
+    } else if (item.action == "emoji") {
+      this.showEmoji();
     } else {
       this.toggleFormat(item.action);
     }
@@ -630,9 +637,16 @@ export class CdkRichTextEditorComponent
     // Remove formatted code tags
     const codeTags = clonedTextNode.querySelectorAll("code");
     codeTags.forEach((codeTag) => {
-      codeTag.attributes.removeNamedItem("class");
-      codeTag.attributes.removeNamedItem("style");
-      codeTag.innerHTML = codeTag.getElementsByTagName("input")[0].value;
+      if (codeTag.hasAttribute("class")) {
+        codeTag.removeAttribute("class");
+      }
+      if (codeTag.hasAttribute("style")) {
+        codeTag.removeAttribute("style");
+      }
+      const inputElement = codeTag.querySelector("input");
+      if (inputElement && inputElement?.value) {
+        codeTag.innerHTML = inputElement.value;
+      }
     });
 
     // Remove formatted hashtags
@@ -647,9 +661,10 @@ export class CdkRichTextEditorComponent
     // Convert Image to imageTag
     const images = clonedTextNode.querySelectorAll("img");
     images.forEach((image: any) => {
-        const textNode = document.createTextNode(`${IMGTAG}${image.src}${IMGTAG}`);
-        image.replaceWith(textNode);
-
+      const urlParts = image.src.split("/");
+      const imgId = urlParts[urlParts.length - 2];
+      const textNode = document.createTextNode(`${IMGTAG}${imgId}${IMGTAG}`);
+      image.replaceWith(textNode);
     });
 
     const editorCode = clonedTextNode.innerHTML;
@@ -666,10 +681,13 @@ export class CdkRichTextEditorComponent
       this.hashtagTemplate,
       this.richTextContainer
     );
-    makeLiveImagetags(
-      this.richText.nativeElement,
-      IMGTAG,
-    );
+
+    const imgInfo: IImgInfo = {
+      domain: this.imgUrl,
+      accountId: this.imgAccountId,
+      variant: this.variant,
+    };
+    makeLiveImagetags(this.richText.nativeElement, imgInfo, IMGTAG);
     this._contentChanged();
   };
 
@@ -678,10 +696,10 @@ export class CdkRichTextEditorComponent
   }
 
   private _setImage(imageRes: IIMageRes): void {
-      let { url, elem } = imageRes;
-      elem.src = url;
-      this.isUploading = false;
-      this._contentChanged();
+    let { url, elem } = imageRes;
+    elem.src = url;
+    this.isUploading = false;
+    this._contentChanged();
   }
 
   private _isInlineTag(tag: string): boolean {
@@ -790,7 +808,7 @@ export class CdkRichTextEditorComponent
         const realHashtag = document.createElement("span");
         const viewRef: EmbeddedViewRef<Node> =
           this.hashtagTemplate.createEmbeddedView({
-            value: { name: item.value },
+            value: { name: item.value.name },
           });
         this.richTextContainer.insert(viewRef);
         for (let node of viewRef.rootNodes) {
@@ -970,37 +988,7 @@ export class CdkRichTextEditorComponent
       event.preventDefault();
       event.stopPropagation();
       const range = getRangeFromPosition(x, y);
-      const formData = new FormData();
-      file && formData.append("photo", file, file.name);
-
-      if (this.uploadImageRequest) {
-        file &&
-          loadImage(file, (dataURI: string) => {
-            setTimeout(async() => {
-              let id: string;
-              let elem: HTMLImageElement | undefined;
-              range &&
-                focusElementWithRange(this.richText.nativeElement, range);
-              range &&
-                ({ id, elem } = await this.insertImage(dataURI.toString(), 500, 500));
-              range && this._contentChanged();
-              this.uploadImageRequest.emit({ file, elem });
-            }, 10);
-          });
-      } else {
-        file &&
-          loadImage(file, (dataURI: string) => {
-            setTimeout(async() => {
-              let id: string;
-              let elem: HTMLImageElement | undefined;
-              range &&
-                focusElementWithRange(this.richText.nativeElement, range);
-              range &&
-                ({ id, elem } = await this.insertImage(dataURI.toString(), 500, 500));
-              range && this._contentChanged();
-            }, 10);
-          });
-      }
+      this.handleFile(file, range);
     }
   };
 
@@ -1014,8 +1002,8 @@ export class CdkRichTextEditorComponent
       event.preventDefault();
       event.stopPropagation();
       const pasteFile = (file: File) => {
-        loadImage(file, async(dataURI: string) => {
-          const { id, elem } = await this.insertImage(dataURI.toString(), 500, 500);
+        loadImage(file, async (dataURI: string) => {
+          const { id, elem } = await this.insertImage(dataURI.toString());
           if (this.uploadImageRequest) {
             this.isUploading = true;
             this.uploadImageRequest.emit({ file, elem });
@@ -1136,4 +1124,91 @@ export class CdkRichTextEditorComponent
     let nodes = this.richText.nativeElement.childNodes;
     this.nodesReplaceContent(nodes, this.urlify);
   };
+
+  onUploadButtonClick(): void {
+    this.fileInput.nativeElement.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      if (file && file.type.startsWith("image/")) {
+        this.handleFile(file);
+      }
+    }
+  }
+
+  private async handleFile(file: File, range?: Range | null) {
+    loadImage(file, async (dataURI: string) => {
+      setTimeout(async () => {
+        let id: string;
+        let elem: HTMLImageElement | undefined;
+
+        if (range) {
+          focusElementWithRange(this.richText.nativeElement, range);
+        }
+
+        ({ id, elem } = await this.insertImage(dataURI.toString()));
+        this._contentChanged();
+
+        if (this.uploadImageRequest) {
+          this.uploadImageRequest.emit({ file, elem });
+        }
+      }, 10);
+    });
+  }
+
+  addEmoji(event: any) {
+    this.isVisibleEmojiModal = false;
+    this.insertText(event.emoji.native);
+  }
+
+  private insertText(content: string) {
+    if (this.savedSelection) {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        selection.removeAllRanges();
+        selection.addRange(this.savedSelection);
+
+        const range = this.savedSelection;
+        range.deleteContents();
+
+        const textNode = document.createTextNode(content);
+        range.insertNode(textNode);
+
+        // Move the caret after the inserted content
+        range.setStartAfter(textNode);
+        range.setEndAfter(textNode);
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        this._contentChanged();
+      }
+    }
+  }
+
+  private saveSelection() {
+    // Get the current selection
+    const selection = window.getSelection();
+
+    if (selection) {
+      const anchorNode = selection.anchorNode;
+      const focusNode = selection.focusNode;
+
+      // Check if the selection is within the richTextEditor
+      const isSelectionInDiv =
+        this.richText.nativeElement.contains(anchorNode) &&
+        this.richText.nativeElement.contains(focusNode);
+
+      if (isSelectionInDiv)
+        this.savedSelection = selection.getRangeAt(0).cloneRange();
+    }
+  }
+
+  showEmoji() {
+    this.isVisibleEmojiModal = true;
+    this.saveSelection();
+  }
 }

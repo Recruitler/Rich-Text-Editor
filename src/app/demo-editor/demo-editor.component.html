@@ -22,11 +22,12 @@
 </ng-template>
 
 <ng-template #hashtagSelectionTemplate let-value="value">
-  <app-hashtag> {{ value?.name ? '#' + value?.name : '' }} </app-hashtag>
+  <app-hashtag> {{ value?.name ? "#" + value?.name : "" }} </app-hashtag>
 </ng-template>
 
 <h2>Recruitler.com's Rich Text Editor</h2>
 <!-- <div [innerText]="content"></div> -->
+<button (click)="onBtnClick('emoji')">Emoji</button>
 <button (click)="onBtnClick('bold')">Bold</button>
 <button (click)="onBtnClick('italic')">Italic</button>
 <button (click)="onBtnClick('heading1')">Heading1</button>
@@ -38,9 +39,10 @@
 <div class="demo-editor">
   <recruitler-rte
     #editor
-    imgUrl="https://ucarecdn.com/"
-    imgAccountId="9680a8cf-0653-4fb8-90a0-610f7b67904a"
     [theme]="currentTheme"
+    [imgUrl]="imgUrl"
+    [imgAccountId]="imgAccountId"
+    [variant]="variant"
     [hashtagItemTemplate]="hashtagItemTemplate"
     [hashtagTemplate]="hashtagSelectionTemplate"
     (hashtagRequest)="hashtagSearch($event)"
