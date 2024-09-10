@@ -175,19 +175,20 @@ export class DemoEditorComponent implements OnInit {
     ];
   }
 
-  // mock upload request - you will use your app's CDN
+  // MOCK upload request - YOU WILL USE YOUR APP'S CDN
   uploadImageRequest($uploadReq: IUploadReq): void {
     uploadFile($uploadReq.file, {
       publicKey: "54008102efbf320823b0",
       store: "auto",
     })
-      .then((result: any) => {
-        if (result?.cdnUrl && result?.name) {
-          $uploadReq.elem.src = result.cdnUrl + result.name;
+      .then((res: any) => {
+        if (res?.cdnUrl && res?.name) {
+          $uploadReq.elem.src = res.cdnUrl + res.name;
+
           // your image CDN response may be different but ultimately needs to be an IIMageRes
           this.uploadImageResult = {
-            url: result.cdnUrl,
-            elem: { src: result.cdnUrl + result.name },
+            url: res.cdnUrl,
+            elem: { src: res.cdnUrl + res.name },
           };
         }
       })

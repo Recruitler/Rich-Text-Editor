@@ -26,7 +26,6 @@
 </ng-template>
 
 <h2>Recruitler.com's Rich Text Editor</h2>
-<!-- <div [innerText]="content"></div> -->
 <button (click)="onBtnClick('emoji')">Emoji</button>
 <button (click)="onBtnClick('bold')">Bold</button>
 <button (click)="onBtnClick('italic')">Italic</button>
@@ -35,6 +34,7 @@
   {{ this.content.enabled ? "enable" : "disable" }}
 </button>
 <button (click)="onBtnClick('code')">Code</button>
+<button (click)="onBtnClick('image')">Image</button>
 
 <div class="demo-editor">
   <recruitler-rte
